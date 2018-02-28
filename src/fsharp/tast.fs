@@ -31,6 +31,9 @@ open Microsoft.FSharp.Compiler.ExtensionTyping
 open Microsoft.FSharp.Core.CompilerServices
 #endif
 
+let mutable WithOptData = 0
+let mutable WithoutOptData = 0
+
 /// Unique name generator for stamps attached to lambdas and object expressions
 type Unique = int64
 
@@ -2660,6 +2663,11 @@ and [<StructuredFormatDisplay("{LogicalName}")>]
     member x.IsLinked = match box x.val_logical_name with null -> false | _ -> true 
 
     override x.ToString() = x.LogicalName
+
+    override x.Finalize() =
+        match x.val_opt_data with
+        | Some _ -> WithOptData <- WithOptData + 1
+        | _ -> WithoutOptData <- WithoutOptData + 1
     
     
 and 
@@ -3425,7 +3433,7 @@ and
 
     override x.ToString() = 
        if x.IsLocalRef then x.ResolvedTarget.DisplayName 
-       else x.nlr.ToString()
+       else x.nlr.ToString()        
 
 /// Represents a reference to a case of a union type
 and UnionCaseRef = 
