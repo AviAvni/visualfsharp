@@ -485,6 +485,9 @@ let ComputeDefinitionLocationOfProvidedItem (p : Tainted<#IProvidedCustomAttribu
     
 #endif
 
+let mutable WithOptData = 0
+let mutable WithoutOptData = 0
+
 type EntityOptionalData =
     {
       /// The name of the type, possibly with `n mangling 
@@ -1160,6 +1163,11 @@ and /// Represents a type definition, exception definition, module definition or
 
     /// Sets the structness of a record or union type definition
     member x.SetIsStructRecordOrUnion b  = let flags = x.entity_flags in x.entity_flags <- EntityFlags(flags.IsPrefixDisplay, flags.IsModuleOrNamespace, flags.PreEstablishedHasDefaultConstructor, flags.HasSelfReferentialConstructor, b)
+
+    override x.Finalize() =
+       match x.entity_opt_data with
+       | Some _ -> WithOptData <- WithOptData + 1
+       | _ -> WithoutOptData <- WithoutOptData + 1
 
 and [<RequireQualifiedAccess>] MaybeLazy<'T> =
     | Strict of 'T

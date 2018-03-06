@@ -2064,4 +2064,7 @@ let compileOfAst (ctok, legacyReferenceResolver, openBinariesInMemory, assemblyN
 let mainCompile (ctok, argv, legacyReferenceResolver, bannerAlreadyPrinted, openBinariesInMemory, defaultCopyFSharpCore, exiter, errorLoggerProvider, tcImportsCapture, dynamicAssemblyCreator) = 
     //System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.Batch
     typecheckAndCompile(ctok, argv, legacyReferenceResolver, bannerAlreadyPrinted, openBinariesInMemory, defaultCopyFSharpCore, exiter, errorLoggerProvider, tcImportsCapture, dynamicAssemblyCreator)
-
+    System.GC.Collect()
+    System.GC.WaitForPendingFinalizers()
+    System.GC.Collect()
+    dprintfn "~~~ Entity statistics: WithOptData %d, WithoutOptData %d" Microsoft.FSharp.Compiler.Tast.WithOptData Microsoft.FSharp.Compiler.Tast.WithoutOptData
