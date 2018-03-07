@@ -2068,3 +2068,5 @@ let mainCompile (ctok, argv, legacyReferenceResolver, bannerAlreadyPrinted, open
     System.GC.WaitForPendingFinalizers()
     System.GC.Collect()
     dprintfn "~~~ Entity statistics: WithOptData %d, WithoutOptData %d" Microsoft.FSharp.Compiler.Tast.WithOptData Microsoft.FSharp.Compiler.Tast.WithoutOptData
+    for i in Microsoft.FSharp.Compiler.Tast.OptDataDetails do
+        dprintfn "~~~ Entity statistics: %s: %d" i.Key i.Value

@@ -487,6 +487,16 @@ let ComputeDefinitionLocationOfProvidedItem (p : Tainted<#IProvidedCustomAttribu
 
 let mutable WithOptData = 0
 let mutable WithoutOptData = 0
+let OptDataDetails = Dictionary<string, int>()
+OptDataDetails.["entity_compiled_name"] <- 0
+OptDataDetails.["entity_other_range"] <- 0
+OptDataDetails.["entity_kind"] <- 0
+OptDataDetails.["entity_xmldoc"] <- 0
+OptDataDetails.["entity_xmldocsig"] <- 0
+OptDataDetails.["entity_tycon_abbrev"] <- 0
+OptDataDetails.["entity_tycon_repr_accessibility"] <- 0
+OptDataDetails.["entity_accessiblity"] <- 0
+OptDataDetails.["entity_exn_info"] <- 0
 
 type EntityOptionalData =
     {
@@ -1166,7 +1176,37 @@ and /// Represents a type definition, exception definition, module definition or
 
     override x.Finalize() =
        match x.entity_opt_data with
-       | Some _ -> WithOptData <- WithOptData + 1
+       | Some x -> 
+            WithOptData <- WithOptData + 1
+
+            if x.entity_compiled_name.IsSome then
+                OptDataDetails.["entity_compiled_name"] <- OptDataDetails.["entity_compiled_name"] + 1
+
+            if x.entity_other_range.IsSome then
+                OptDataDetails.["entity_other_range"] <- OptDataDetails.["entity_other_range"] + 1
+
+            if not (x.entity_kind = TyparKind.Type) then
+                OptDataDetails.["entity_kind"] <- OptDataDetails.["entity_kind"] + 1
+
+            if not (x.entity_xmldoc = XmlDoc.Empty) then
+                OptDataDetails.["entity_xmldoc"] <- OptDataDetails.["entity_xmldoc"] + 1
+
+            if not (x.entity_xmldocsig = "") then
+                OptDataDetails.["entity_xmldocsig"] <- OptDataDetails.["entity_xmldocsig"] + 1
+
+            if x.entity_tycon_abbrev.IsSome then
+                OptDataDetails.["entity_tycon_abbrev"] <- OptDataDetails.["entity_tycon_abbrev"] + 1
+
+            if not (x.entity_tycon_repr_accessibility = TAccess []) then
+                OptDataDetails.["entity_tycon_repr_accessibility"] <- OptDataDetails.["entity_tycon_repr_accessibility"] + 1
+
+            if not (x.entity_accessiblity = TAccess []) then
+                OptDataDetails.["entity_accessiblity"] <- OptDataDetails.["entity_accessiblity"] + 1
+
+            match x.entity_exn_info with
+            | TExnNone -> ()
+            | _ -> OptDataDetails.["entity_exn_info"] <- OptDataDetails.["entity_exn_info"] + 1
+                
        | _ -> WithoutOptData <- WithoutOptData + 1
 
 and [<RequireQualifiedAccess>] MaybeLazy<'T> =
