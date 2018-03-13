@@ -213,7 +213,7 @@ module internal InterfaceStubGenerator =
         let nm = 
             match arg.Name with 
             | None ->
-                if arg.Type.HasTypeDefinition && arg.Type.TypeDefinition.XmlDocSig = "T:Microsoft.FSharp.Core.unit" then "()" 
+                if arg.Type.HasTypeDefinition && arg.Type.TypeDefinition.CompiledName = "unit" then "()" 
                 else sprintf "arg%d" (namesWithIndices |> Map.toSeq |> Seq.map snd |> Seq.sumBy Set.count |> max 1)
             | Some x -> x
         
@@ -302,7 +302,7 @@ module internal InterfaceStubGenerator =
             let args, namesWithIndices =
                 match argInfos with
                 | [[x]] when v.IsPropertyGetterMethod && x.Name.IsNone 
-                                && x.Type.TypeDefinition.XmlDocSig = "T:Microsoft.FSharp.Core.unit" -> 
+                                && x.Type.TypeDefinition.CompiledName = "unit" -> 
                     "", Map.ofList [ctx.ObjectIdent, Set.empty]
                 | _  -> formatArgsUsage ctx verboseMode v argInfos
              
