@@ -2110,11 +2110,13 @@ and
             if not (x.typar_xmldoc = XmlDoc.Empty) then
                 OptDataDetails.["typar_xmldoc"] <- OptDataDetails.["typar_xmldoc"] + 1
 
-            if not (box x.typar_constraints = null) then
-                OptDataDetails.["typar_constraints"] <- OptDataDetails.["typar_constraints"] + 1
+            match x.typar_constraints with
+            | [] -> ()
+            | _ -> OptDataDetails.["typar_constraints"] <- OptDataDetails.["typar_constraints"] + 1
 
-            if not (box x.typar_attribs = null) then
-                OptDataDetails.["typar_attribs"] <- OptDataDetails.["typar_attribs"] + 1
+            match x.typar_attribs with
+            | [] -> ()
+            | _ -> OptDataDetails.["typar_attribs"] <- OptDataDetails.["typar_attribs"] + 1
                 
        | _ -> WithoutOptData <- WithoutOptData + 1
 
