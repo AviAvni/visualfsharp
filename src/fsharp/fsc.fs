@@ -2106,3 +2106,9 @@ let mainCompile (ctok, argv, legacyReferenceResolver, bannerAlreadyPrinted, redu
     //System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.Batch
     typecheckAndCompile(ctok, argv, legacyReferenceResolver, bannerAlreadyPrinted, reduceMemoryUsage, defaultCopyFSharpCore, exiter, errorLoggerProvider, tcImportsCapture, dynamicAssemblyCreator)
 
+    System.GC.Collect()
+    System.GC.WaitForPendingFinalizers()
+    System.GC.Collect()
+    dprintfn "~~~ Typar statistics: WithOptData %d, WithoutOptData %d" Microsoft.FSharp.Compiler.Tast.WithOptData Microsoft.FSharp.Compiler.Tast.WithoutOptData
+    for i in Microsoft.FSharp.Compiler.Tast.OptDataDetails do
+        dprintfn "~~~ Typar statistics: %s: %d" i.Key i.Value

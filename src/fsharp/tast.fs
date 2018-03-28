@@ -53,6 +53,14 @@ let globalStableNameGenerator = StableNiceNameGenerator ()
 
 type StampMap<'T> = Map<Stamp,'T>
 
+let mutable WithOptData = 0
+let mutable WithoutOptData = 0
+let OptDataDetails = Dictionary<string, int>()
+OptDataDetails.["typar_il_name"] <- 0
+OptDataDetails.["typar_xmldoc"] <- 0
+OptDataDetails.["typar_constraints"] <- 0
+OptDataDetails.["typar_attribs"] <- 0
+
 //-------------------------------------------------------------------------
 // Flags
 
@@ -2090,6 +2098,25 @@ and
     member x.SetComparisonDependsOn b = let flags = x.typar_flags in x.typar_flags <- TyparFlags(flags.Kind, flags.Rigidity, flags.IsFromError, flags.IsCompilerGenerated, flags.StaticReq, flags.DynamicReq, flags.EqualityConditionalOn, b) 
 
     override x.ToString() = x.Name
+
+    override x.Finalize() =
+       match x.typar_opt_data with
+       | Some x -> 
+            WithOptData <- WithOptData + 1
+
+            if x.typar_il_name.IsSome then
+                OptDataDetails.["typar_il_name"] <- OptDataDetails.["typar_il_name"] + 1
+
+            if not (x.typar_xmldoc = XmlDoc.Empty) then
+                OptDataDetails.["typar_xmldoc"] <- OptDataDetails.["typar_xmldoc"] + 1
+
+            if not (box x.typar_constraints = null) then
+                OptDataDetails.["typar_constraints"] <- OptDataDetails.["typar_constraints"] + 1
+
+            if not (box x.typar_attribs = null) then
+                OptDataDetails.["typar_attribs"] <- OptDataDetails.["typar_attribs"] + 1
+                
+       | _ -> WithoutOptData <- WithoutOptData + 1
 
 and
     [<NoEquality; NoComparison; RequireQualifiedAccess>]
