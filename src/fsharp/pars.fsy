@@ -4524,7 +4524,9 @@ atomType:
 
   | rawConstant 
      { // OPENFSHARP TODO: return SynType.Nat in case that rawConstant is SynConst.Int32
-       SynType.StaticConstant($1, rhs parseState 1) }
+       match $1 with
+       | SynConst.Int32 num -> SynType.Nat(num, rhs parseState 1)
+       | _ -> SynType.StaticConstant($1, rhs parseState 1) }
 
   | NULL
      { let m = rhs parseState 1

@@ -3899,6 +3899,7 @@ and
     | TType_tuple of TupInfo * TTypes
 
     // OPENFSHARP TODO: add TType_nat option
+    | TType_nat of int
 
     /// TType_fun(domainType,rangeType).
     ///
@@ -3926,6 +3927,7 @@ and
         | TType_app (tcref, _tinst)      -> tcref.CompilationPath.ILScopeRef.QualifiedName
         | TType_tuple (_tupInfo, _tinst) -> ""
         // OPENFSHARP TODO: implement GetAssemblyName method
+        | TType_nat _                    -> ""
         | TType_fun (_d,_r)              -> ""
         | TType_measure _ms              -> ""
         | TType_var tp                   -> tp.Solution |> function Some sln -> sln.GetAssemblyName() | None -> ""
@@ -3946,6 +3948,7 @@ and
              | TupInfo.Const true -> "struct ")
              + String.concat "," (List.map string tinst) + ")"
         // OPENFSHARP TODO: implement ToString method
+        | TType_nat num -> string num
         | TType_fun (d,r) -> "(" + string d + " -> " + string r + ")"
         | TType_ucase (uc,tinst) -> "ucase " + uc.CaseName + (match tinst with [] -> "" | tys -> "<" + String.concat "," (List.map string tys) + ">")
         | TType_var tp -> 

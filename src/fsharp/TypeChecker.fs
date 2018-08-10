@@ -4588,6 +4588,8 @@ and TcTypeOrMeasure optKind cenv newOk checkCxs occ env (tpenv:SyntacticUnscoped
             TType_tuple(tupInfoRef, args'), tpenv
 
     // OPENFSHARP TODO: implement the conversion between SynType.Nat to TType_nat
+    | SynType.Nat(num, _) ->   
+        TType_nat(num), tpenv
 
     | SynType.StructTuple(args, m) ->   
         let args', tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
@@ -4705,7 +4707,7 @@ and TcTypes cenv newOk checkCxs occ env tpenv args =
 and TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m = 
     match args with
     | [] -> error(InternalError("empty tuple type", m))
-    | [(_, ty)] -> let ty, tpenv = TcTypeAndRecover cenv ntewOk checkCxs occ env tpenv ty in [ty], tpenv
+    | [(_, ty)] -> let ty, tpenv = TcTypeAndRecover cenv newOk checkCxs occ env tpenv ty in [ty], tpenv
     | (isquot, ty)::args -> 
         let ty, tpenv = TcTypeAndRecover cenv newOk checkCxs occ env tpenv ty
         let tys, tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
@@ -4721,7 +4723,27 @@ and TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m =
         // 5. type Three = 3
         //    type IntXThree = int * Three
         //    type IntXThreeXBoolXThree = int * Three * Bool * Three
-        ty::tys, tpenv
+        match ty, tys with
+        | TType_nat(n1), TType_nat(n2)::rest -> TType_nat(n1 * n2)::rest, tpenv
+        | TType_app(ref1, _), TType_app(ref2, _)::rest ->
+            match ref1.TypeAbbrev, ref2.TypeAbbrev with
+            | Some(TType_nat(n1)), Some(TType_nat(n2)) -> TType_nat(n1 * n2)::rest, tpenv
+            | _, Some(TType_nat(n)) -> (List.replicate n ty)@rest, tpenv
+            | _ -> ty::tys, tpenv
+        | TType_app(ref, _), TType_nat(n1)::rest ->
+            match ref.TypeAbbrev with
+            | Some(TType_nat(n2)) -> TType_nat(n1 * n2)::rest, tpenv
+            | _ -> (List.replicate n1 ty)@rest, tpenv
+        | _, TType_nat(n)::rest -> (List.replicate n ty)@rest, tpenv
+        | TType_nat(n1), TType_app(ref, _)::rest ->
+            match ref.TypeAbbrev with
+            | Some(TType_nat(n2)) -> TType_nat(n1 * n2)::rest, tpenv
+            | _ -> ty::tys, tpenv
+        | _, TType_app(ref, _)::rest ->
+            match ref.TypeAbbrev with
+            | Some(TType_nat(n)) -> (List.replicate n ty)@rest, tpenv
+            | _ -> ty::tys, tpenv
+        | _ -> ty::tys, tpenv
 
 // Type-check a list of measures separated by juxtaposition, * or /
 and TcMeasuresAsTuple cenv newOk checkCxs occ env (tpenv:SyntacticUnscopedTyparEnv) args m = 
@@ -15593,6 +15615,7 @@ module EstablishTypeDefinitionCores =
                 match stripTyparEqns ty with 
                 | TType_tuple (_, l) -> accInAbbrevTypes l acc
                 // OPENFSHARP TODO: implement that TType_nat is ignored in checking cycles in abbreviations
+                | TType_nat _ -> acc
                 | TType_ucase (UCRef(tc, _), tinst) 
                 | TType_app (tc, tinst) -> 
                     let tycon2 = tc.Deref
