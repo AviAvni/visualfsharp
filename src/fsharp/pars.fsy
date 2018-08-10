@@ -4322,6 +4322,8 @@ typEOF:
 
 
 tupleType:
+  // OPENFSHARP TODO: Add a rule to parse type like: int * * 3 and transform it to : int, int, int
+
   | appType STAR tupleOrQuotTypeElements 
     { SynType.Tuple((false,$1) :: $3,lhs parseState) }
 
