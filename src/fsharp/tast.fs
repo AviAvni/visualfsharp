@@ -3898,6 +3898,8 @@ and
     /// Indicates the type is a tuple type. elementTypes must be of length 2 or greater.
     | TType_tuple of TupInfo * TTypes
 
+    // OPENFSHARP TODO: add TType_nat option
+
     /// TType_fun(domainType,rangeType).
     ///
     /// Indicates the type is a function type 
@@ -3923,6 +3925,7 @@ and
         | TType_forall (_tps, ty)        -> ty.GetAssemblyName()
         | TType_app (tcref, _tinst)      -> tcref.CompilationPath.ILScopeRef.QualifiedName
         | TType_tuple (_tupInfo, _tinst) -> ""
+        // OPENFSHARP TODO: implement GetAssemblyName method
         | TType_fun (_d,_r)              -> ""
         | TType_measure _ms              -> ""
         | TType_var tp                   -> tp.Solution |> function Some sln -> sln.GetAssemblyName() | None -> ""
@@ -3942,6 +3945,7 @@ and
              | TupInfo.Const false -> ""
              | TupInfo.Const true -> "struct ")
              + String.concat "," (List.map string tinst) + ")"
+        // OPENFSHARP TODO: implement ToString method
         | TType_fun (d,r) -> "(" + string d + " -> " + string r + ")"
         | TType_ucase (uc,tinst) -> "ucase " + uc.CaseName + (match tinst with [] -> "" | tys -> "<" + String.concat "," (List.map string tys) + ">")
         | TType_var tp -> 

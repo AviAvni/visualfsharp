@@ -2100,6 +2100,7 @@ and FSharpType(cenv, ty:TType) =
             | TType_tuple (_, l1) -> 10400 + List.sumBy hashType l1
             | TType_fun (dty, rty) -> 10500 + hashType dty + hashType rty
             | TType_measure _ -> 10600 
+            | TType_nat num -> 10700 + hash num
         hashType ty
 
     member x.Format(denv: FSharpDisplayContext) = 

@@ -1571,6 +1571,7 @@ let _ = fill_p_ty2 (fun isStructThisArgPos ty st ->
               p_byte 8 st; p_tys l st
           else
               p_byte 0 st; p_tys l st
+    | TType_nat _ -> ()
     | TType_app(ERefNonLocal nleref,[]) -> p_byte 1 st; p_simpletyp nleref st
     | TType_app (tc,tinst)              -> p_byte 2 st; p_tup2 (p_tcref "typ") p_tys (tc,tinst) st
     | TType_fun (d,r)                   -> 

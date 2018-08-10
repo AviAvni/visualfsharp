@@ -566,7 +566,7 @@ let rec SimplifyMeasuresInType g resultFirst ((generalizable, generalized) as pa
     | TType_ucase(_, l)
     | TType_app (_, l) 
     | TType_tuple (_, l) -> SimplifyMeasuresInTypes g param l
-
+    | TType_nat _ -> [], []
     | TType_fun (d, r) -> if resultFirst then SimplifyMeasuresInTypes g param [r;d] else SimplifyMeasuresInTypes g param [d;r]        
     | TType_var _   -> param
     | TType_forall (_, tau) -> SimplifyMeasuresInType g resultFirst param tau
@@ -603,7 +603,7 @@ let rec GetMeasureVarGcdInType v ty =
     | TType_ucase(_, l)
     | TType_app (_, l) 
     | TType_tuple (_, l) -> GetMeasureVarGcdInTypes v l
-
+    | TType_nat _ -> ZeroRational
     | TType_fun (d, r) -> GcdRational (GetMeasureVarGcdInType v d) (GetMeasureVarGcdInType v r)
     | TType_var _   -> ZeroRational
     | TType_forall (_, tau) -> GetMeasureVarGcdInType v tau

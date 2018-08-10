@@ -187,6 +187,8 @@ let rec remapTypeAux (tyenv : Remap) (ty:TType) =
       if tupInfo === tupInfo' && l === l' then ty else  
       TType_tuple (tupInfo', l')
 
+  | TType_nat _ -> ty
+
   | TType_fun (d, r) as ty      -> 
       let d' = remapTypeAux tyenv d
       let r' = remapTypeAux tyenv r
@@ -1015,6 +1017,8 @@ let rec getErasedTypes g ty =
         List.foldBack (fun ty tys -> getErasedTypes g ty @ tys) b []
     | TType_fun (dty, rty) -> 
         getErasedTypes g dty @ getErasedTypes g rty
+    | TType_nat _ -> 
+        [ty]
     | TType_measure _ -> 
         [ty]
 
@@ -2037,6 +2041,7 @@ and accFreeTyparRef opts (tp:Typar) acc =
 and accFreeInType opts ty acc  = 
     match stripTyparEqns ty with 
     | TType_tuple (tupInfo, l) -> accFreeInTypes opts l (accFreeInTupInfo opts tupInfo acc)
+    | TType_nat _ -> acc
     | TType_app (tc, tinst) -> 
         let acc = accFreeTycon opts tc acc
         match tinst with 
@@ -2129,6 +2134,7 @@ and accFreeInTypeLeftToRight g cxFlag thruFlag acc ty  =
     | TType_tuple (tupInfo, l) -> 
         let acc = accFreeInTupInfoLeftToRight g cxFlag thruFlag acc tupInfo 
         accFreeInTypesLeftToRight g cxFlag thruFlag acc l 
+    | TType_nat _ -> []
     | TType_app (_, tinst) -> accFreeInTypesLeftToRight g cxFlag thruFlag acc tinst 
     | TType_ucase (_, tinst) -> accFreeInTypesLeftToRight g cxFlag thruFlag acc tinst 
     | TType_fun (d, r) -> accFreeInTypeLeftToRight g cxFlag thruFlag (accFreeInTypeLeftToRight g cxFlag thruFlag acc d ) r
@@ -2521,6 +2527,7 @@ module SimplifyTypes =
         | TType_app (_, tinst) -> List.fold (foldTypeButNotConstraints f) z tinst
         | TType_ucase (_, tinst) -> List.fold (foldTypeButNotConstraints f) z tinst
         | TType_tuple (_, tys) -> List.fold (foldTypeButNotConstraints f) z tys
+        | TType_nat _ -> z
         | TType_fun (s, t)         -> foldTypeButNotConstraints f (foldTypeButNotConstraints f z s) t
         | TType_var _            -> z
         | TType_measure _          -> z
@@ -3204,6 +3211,7 @@ module DebugPrint = begin
            let tcL = layoutTyconRef tcref
            auxTyparsL env tcL prefix tinst
         | TType_tuple (_tupInfo, tys) -> sepListL (wordL (tagText "*")) (List.map (auxTypeAtomL env) tys) |> wrap
+        | TType_nat num -> leftL (tagText (string num)) |> wrap
         | TType_fun (f, x)           -> ((auxTypeAtomL env f ^^ wordL (tagText "->")) --- auxTypeL env x) |> wrap
         | TType_var typar           -> auxTyparWrapL env isAtomic typar 
         | TType_measure unt -> 
@@ -7332,6 +7340,7 @@ let rec typeEnc g (gtpsType, gtpsMethod) ty =
             sprintf "System.ValueTuple%s"(tyargsEnc g (gtpsType, gtpsMethod) tys)
         else 
             sprintf "System.Tuple%s"(tyargsEnc g (gtpsType, gtpsMethod) tys)
+    | TType_nat num -> string num
     | TType_fun (f, x)           -> 
         "Microsoft.FSharp.Core.FSharpFunc" + tyargsEnc g (gtpsType, gtpsMethod) [f;x]
     | TType_var typar           -> 

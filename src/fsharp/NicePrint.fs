@@ -941,6 +941,9 @@ module private PrintTypes =
             else 
                 bracketIfL (prec <= 2) (layoutTypesWithInfoAndPrec denv env 2 (wordL (tagPunctuation "*")) t)
 
+        | TType_nat num ->
+            wordL (tagText (string num))
+
         // Layout a first-class generic type. 
         | TType_forall (tps,tau) ->
             let tauL = layoutTypeWithInfoAndPrec denv env prec tau

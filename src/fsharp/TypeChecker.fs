@@ -4587,6 +4587,8 @@ and TcTypeOrMeasure optKind cenv newOk checkCxs occ env (tpenv:SyntacticUnscoped
             let args', tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
             TType_tuple(tupInfoRef, args'), tpenv
 
+    // OPENFSHARP TODO: implement the conversion between SynType.Nat to TType_nat
+
     | SynType.StructTuple(args, m) ->   
         let args', tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
         TType_tuple(tupInfoStruct, args'), tpenv
@@ -4703,11 +4705,22 @@ and TcTypes cenv newOk checkCxs occ env tpenv args =
 and TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m = 
     match args with
     | [] -> error(InternalError("empty tuple type", m))
-    | [(_, ty)] -> let ty, tpenv = TcTypeAndRecover cenv newOk checkCxs occ env tpenv ty in [ty], tpenv
+    | [(_, ty)] -> let ty, tpenv = TcTypeAndRecover cenv ntewOk checkCxs occ env tpenv ty in [ty], tpenv
     | (isquot, ty)::args -> 
         let ty, tpenv = TcTypeAndRecover cenv newOk checkCxs occ env tpenv ty
         let tys, tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
         if isquot then errorR(Error(FSComp.SR.tcUnexpectedSlashInType(), m))
+        // OPENFSHARP TODO: implement the multiplication of types
+        // Consider the cases of
+        // 1. type ThreeXThree = 3 * 3
+        // 2. type ThreeXThreeXThree = 3 * 3 * 3
+        // 3. type IntXThree = int * 3
+        // 4. type Three = 3
+        //    type ThreeXThree = Three * Three
+        //    type ThreeXThreeXThree = Three * Three * Three
+        // 5. type Three = 3
+        //    type IntXThree = int * Three
+        //    type IntXThreeXBoolXThree = int * Three * Bool * Three
         ty::tys, tpenv
 
 // Type-check a list of measures separated by juxtaposition, * or /
@@ -15579,6 +15592,7 @@ module EstablishTypeDefinitionCores =
             let rec accInAbbrevType ty acc  = 
                 match stripTyparEqns ty with 
                 | TType_tuple (_, l) -> accInAbbrevTypes l acc
+                // OPENFSHARP TODO: implement that TType_nat is ignored in checking cycles in abbreviations
                 | TType_ucase (UCRef(tc, _), tinst) 
                 | TType_app (tc, tinst) -> 
                     let tycon2 = tc.Deref

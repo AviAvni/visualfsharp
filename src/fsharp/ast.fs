@@ -431,6 +431,8 @@ and
     // the bool is true if / rather than * follows the type
     | Tuple of typeNames:(bool*SynType) list * range:range
 
+    // OPENFSHARP TODO: add the Nat option
+
     /// F# syntax : struct (type * ... * type)
     // the bool is true if / rather than * follows the type
     | StructTuple of typeNames:(bool*SynType) list * range:range
@@ -464,6 +466,7 @@ and
         | SynType.App (range=m)
         | SynType.LongIdentApp (range=m)
         | SynType.Tuple (range=m)
+        // OPENFSHARP TODO: implement the Range property
         | SynType.StructTuple (range=m)
         | SynType.Array (range=m)
         | SynType.Fun (range=m)

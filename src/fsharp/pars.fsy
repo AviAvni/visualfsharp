@@ -4523,7 +4523,8 @@ atomType:
       SynType.Anon (lhs parseState) }
 
   | rawConstant 
-     { SynType.StaticConstant($1, rhs parseState 1) }
+     { // OPENFSHARP TODO: return SynType.Nat in case that rawConstant is SynConst.Int32
+       SynType.StaticConstant($1, rhs parseState 1) }
 
   | NULL
      { let m = rhs parseState 1
