@@ -4713,37 +4713,7 @@ and TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m =
         let tys, tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
         if isquot then errorR(Error(FSComp.SR.tcUnexpectedSlashInType(), m))
         // OPENFSHARP TODO: implement the multiplication of types
-        // Consider the cases of
-        // 1. type ThreeXThree = 3 * 3
-        // 2. type ThreeXThreeXThree = 3 * 3 * 3
-        // 3. type IntXThree = int * 3
-        // 4. type Three = 3
-        //    type ThreeXThree = Three * Three
-        //    type ThreeXThreeXThree = Three * Three * Three
-        // 5. type Three = 3
-        //    type IntXThree = int * Three
-        //    type IntXThreeXBoolXThree = int * Three * Bool * Three
-        match ty, tys with
-        | TType_nat(n1), TType_nat(n2)::rest -> TType_nat(n1 * n2)::rest, tpenv
-        | TType_app(ref1, _), TType_app(ref2, _)::rest ->
-            match ref1.TypeAbbrev, ref2.TypeAbbrev with
-            | Some(TType_nat(n1)), Some(TType_nat(n2)) -> TType_nat(n1 * n2)::rest, tpenv
-            | _, Some(TType_nat(n)) -> (List.replicate n ty)@rest, tpenv
-            | _ -> ty::tys, tpenv
-        | TType_app(ref, _), TType_nat(n1)::rest ->
-            match ref.TypeAbbrev with
-            | Some(TType_nat(n2)) -> TType_nat(n1 * n2)::rest, tpenv
-            | _ -> (List.replicate n1 ty)@rest, tpenv
-        | _, TType_nat(n)::rest -> (List.replicate n ty)@rest, tpenv
-        | TType_nat(n1), TType_app(ref, _)::rest ->
-            match ref.TypeAbbrev with
-            | Some(TType_nat(n2)) -> TType_nat(n1 * n2)::rest, tpenv
-            | _ -> ty::tys, tpenv
-        | _, TType_app(ref, _)::rest ->
-            match ref.TypeAbbrev with
-            | Some(TType_nat(n)) -> (List.replicate n ty)@rest, tpenv
-            | _ -> ty::tys, tpenv
-        | _ -> ty::tys, tpenv
+        tyMultiplication ty tys, tpenv
 
 // Type-check a list of measures separated by juxtaposition, * or /
 and TcMeasuresAsTuple cenv newOk checkCxs occ env (tpenv:SyntacticUnscopedTyparEnv) args m = 

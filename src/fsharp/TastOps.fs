@@ -705,6 +705,30 @@ let reduceTyconMeasureableOrProvided (g:TcGlobals) (tycon:Tycon) tyargs =
 let reduceTyconRefMeasureableOrProvided (g:TcGlobals) (tcref:TyconRef) tyargs = 
     reduceTyconMeasureableOrProvided g tcref.Deref tyargs
 
+// Consider the cases of
+// 1. type ThreeXThree = 3 * 3
+// 2. type ThreeXThreeXThree = 3 * 3 * 3
+// 3. type IntXThree = int * 3
+// 4. type Three = 3
+//    type ThreeXThree = Three * Three
+//    type ThreeXThreeXThree = Three * Three * Three
+// 5. type Three = 3
+//    type IntXThree = int * Three
+//    type IntXThreeXBoolXThree = int * Three * bool * Three
+let rec tyMultiplication ty tys =
+    match ty, tys with
+    | TType_nat(n1), TType_nat(n2)::rest -> tyMultiplication (TType_nat(n1 * n2)) rest
+    | TType_app(ref, _), rest when ref.IsTypeAbbrev ->
+        match ref.TypeAbbrev, rest with
+        | Some(TType_nat _ as n1), n2::rest -> tyMultiplication n1 (tyMultiplication n2 rest)
+        | Some(TType_nat _ as n1), [] -> [n1]
+        | _, n1::rest -> 
+            match tyMultiplication n1 rest with
+            | TType_nat(n)::rest -> (List.replicate n ty)@rest
+            | rest -> ty::rest
+        | _ -> ty::rest
+    | _ -> ty::tys
+
 let rec stripTyEqnsA g canShortcut ty = 
     let ty = stripTyparEqnsAux canShortcut ty 
     match ty with 
@@ -727,6 +751,8 @@ let rec stripTyEqnsA g canShortcut ty =
                 stripTyEqnsA g canShortcut (reduceTyconMeasureableOrProvided g tycon tinst)
             else 
                 ty
+    | TType_tuple (info, ty::tys) ->
+        TType_tuple(info, tyMultiplication ty tys)
     | ty -> ty
 
 let stripTyEqns g ty = stripTyEqnsA g false ty
