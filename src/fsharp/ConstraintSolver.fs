@@ -822,6 +822,7 @@ and SolveTypeEqualsType (csenv:ConstraintSolverEnv) ndeep m2 (trace: OptionalTra
         if n1 >= 0 then CompleteD
         else ErrorD (ConstraintSolverError("Nat can't be less then 0", csenv.m, m2))
     | TType_minus (_, l::(TType_nat r)::[]), TType_nat n  -> SolveTypeEqualsTypeKeepAbbrevs csenv ndeep m2 trace l (TType_nat(n + r))
+    | TType_minus (_, l1), TType_minus (_, l2) -> SolveTypeEqualsTypeEqns csenv ndeep m2 trace None l1 l2
     | _  -> localAbortD
 
 
