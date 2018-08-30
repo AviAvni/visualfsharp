@@ -2101,6 +2101,7 @@ and FSharpType(cenv, ty:TType) =
             | TType_fun (dty, rty) -> 10500 + hashType dty + hashType rty
             | TType_measure _ -> 10600 
             | TType_nat num -> 10700 + hash num
+            | TType_minus (_, l1) -> 10800 + List.sumBy hashType l1
         hashType ty
 
     member x.Format(denv: FSharpDisplayContext) = 

@@ -438,7 +438,7 @@ val reduceTyconRefAbbrev : TyconRef -> TypeInst -> TType
 val reduceTyconRefMeasureableOrProvided : TcGlobals -> TyconRef -> TypeInst -> TType
 val reduceTyconRefAbbrevMeasureable : TyconRef -> Measure
 
-val tyMultiplication : TType -> TType list -> TType list
+val tyMultiplication : TType -> TType list -> (int -> int -> int) -> TType list
 
 /// set bool to 'true' to allow shortcutting of type parameter equation chains during stripping 
 val stripTyEqnsA : TcGlobals -> bool -> TType -> TType 

@@ -438,7 +438,7 @@ and GenTypeAux amap m (tyenv: TypeReprEnv) voidOK ptrsOK ty =
 
     | TType_tuple (tupInfo, args) -> GenTypeAux amap m tyenv VoidNotOK ptrsOK (mkCompiledTupleTy g (evalTupInfoIsStruct tupInfo) args)
 
-    | TType_nat _ -> g.ilg.typ_Int32
+    | TType_nat _ | TType_minus _ -> g.ilg.typ_Int32
 
     | TType_fun (dty, returnTy) -> EraseClosures.mkILFuncTy g.ilxPubCloEnv  (GenTypeArgAux amap m tyenv dty) (GenTypeArgAux amap m tyenv returnTy)
 

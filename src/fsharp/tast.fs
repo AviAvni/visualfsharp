@@ -3901,6 +3901,8 @@ and
     // OPENFSHARP TODO: add TType_nat option
     | TType_nat of int
 
+    | TType_minus of TupInfo * TTypes
+
     /// TType_fun(domainType,rangeType).
     ///
     /// Indicates the type is a function type 
@@ -3928,6 +3930,7 @@ and
         | TType_tuple (_tupInfo, _tinst) -> ""
         // OPENFSHARP TODO: implement GetAssemblyName method
         | TType_nat _                    -> ""
+        | TType_minus _                  -> ""
         | TType_fun (_d,_r)              -> ""
         | TType_measure _ms              -> ""
         | TType_var tp                   -> tp.Solution |> function Some sln -> sln.GetAssemblyName() | None -> ""
@@ -3949,6 +3952,7 @@ and
              + String.concat "," (List.map string tinst) + ")"
         // OPENFSHARP TODO: implement ToString method
         | TType_nat num -> string num
+        | TType_minus (l, r) -> string l + " - " + string r
         | TType_fun (d,r) -> "(" + string d + " -> " + string r + ")"
         | TType_ucase (uc,tinst) -> "ucase " + uc.CaseName + (match tinst with [] -> "" | tys -> "<" + String.concat "," (List.map string tys) + ">")
         | TType_var tp -> 

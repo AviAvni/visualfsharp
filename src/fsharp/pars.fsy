@@ -4329,6 +4329,9 @@ tupleType:
   | appType STAR tupleOrQuotTypeElements 
     { SynType.Tuple((false,$1) :: $3,lhs parseState) }
 
+  | tupleType MINUS minusTypeElements
+     { SynType.Minus((false,$1) :: $3, lhs parseState) }
+
   | INFIX_STAR_DIV_MOD_OP tupleOrQuotTypeElements
     { if $1 <> "/" then reportParseErrorAt (rhs parseState 1) (FSComp.SR.parsUnexpectedInfixOperator());
       SynType.Tuple((true, SynType.StaticConstant (SynConst.Int32 1, lhs parseState)):: $2, lhs parseState) }
@@ -4339,6 +4342,13 @@ tupleType:
 
   | appType %prec prec_tuptyp_prefix 
     { $1 }
+
+minusTypeElements:
+  | tupleType MINUS minusTypeElements              
+    { (false,$1) :: $3 }
+
+  | tupleType %prec prec_tuptyptail_prefix 
+    { [(false,$1)] }
 
 tupleOrQuotTypeElements:
   | appType STAR tupleOrQuotTypeElements              

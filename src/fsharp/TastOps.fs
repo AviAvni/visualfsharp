@@ -189,6 +189,12 @@ let rec remapTypeAux (tyenv : Remap) (ty:TType) =
 
   | TType_nat _ -> ty
 
+  | TType_minus (tupInfo, l)  as ty -> 
+      let tupInfo' = remapTupInfoAux tyenv tupInfo
+      let l' = remapTypesAux tyenv l
+      if tupInfo === tupInfo' && l === l' then ty else  
+      TType_minus (tupInfo', l')
+
   | TType_fun (d, r) as ty      -> 
       let d' = remapTypeAux tyenv d
       let r' = remapTypeAux tyenv r
@@ -715,15 +721,15 @@ let reduceTyconRefMeasureableOrProvided (g:TcGlobals) (tcref:TyconRef) tyargs =
 // 5. type Three = 3
 //    type IntXThree = int * Three
 //    type IntXThreeXBoolXThree = int * Three * bool * Three
-let rec tyMultiplication ty tys =
+let rec tyMultiplication ty tys op =
     match ty, tys with
-    | TType_nat(n1), TType_nat(n2)::rest -> tyMultiplication (TType_nat(n1 * n2)) rest
+    | TType_nat(n1), TType_nat(n2)::rest -> tyMultiplication (TType_nat(op n1 n2)) rest op
     | TType_app(ref, _), rest when ref.IsTypeAbbrev ->
         match ref.TypeAbbrev, rest with
-        | Some(TType_nat _ as n1), n2::rest -> tyMultiplication n1 (tyMultiplication n2 rest)
+        | Some(TType_nat _ as n1), n2::rest -> tyMultiplication n1 (tyMultiplication n2 rest op) op
         | Some(TType_nat _ as n1), [] -> [n1]
         | _, n1::rest -> 
-            match tyMultiplication n1 rest with
+            match tyMultiplication n1 rest op with
             | TType_nat(n)::rest -> (List.replicate n ty)@rest
             | rest -> ty::rest
         | _ -> ty::rest
@@ -752,7 +758,15 @@ let rec stripTyEqnsA g canShortcut ty =
             else 
                 ty
     | TType_tuple (info, ty::tys) ->
-        TType_tuple(info, tyMultiplication ty tys)
+        match tyMultiplication ty tys (*) with
+        | ty::[] -> ty
+        | tys -> TType_tuple(info, tys)
+    | TType_minus (info, ty::tys) ->
+        let ty = stripTyEqnsA g canShortcut ty
+        let tys = tys |> List.map (stripTyEqnsA g canShortcut)
+        match tyMultiplication ty tys (-) with
+        | ty::[] -> ty
+        | tys -> TType_minus(info, tys)
     | ty -> ty
 
 let stripTyEqns g ty = stripTyEqnsA g false ty
@@ -1043,7 +1057,7 @@ let rec getErasedTypes g ty =
         List.foldBack (fun ty tys -> getErasedTypes g ty @ tys) b []
     | TType_fun (dty, rty) -> 
         getErasedTypes g dty @ getErasedTypes g rty
-    | TType_nat _ -> 
+    | TType_nat _ | TType_minus _  -> 
         [ty]
     | TType_measure _ -> 
         [ty]
@@ -2066,7 +2080,7 @@ and accFreeTyparRef opts (tp:Typar) acc =
 
 and accFreeInType opts ty acc  = 
     match stripTyparEqns ty with 
-    | TType_tuple (tupInfo, l) -> accFreeInTypes opts l (accFreeInTupInfo opts tupInfo acc)
+    | TType_tuple (tupInfo, l) | TType_minus (tupInfo, l) -> accFreeInTypes opts l (accFreeInTupInfo opts tupInfo acc)
     | TType_nat _ -> acc
     | TType_app (tc, tinst) -> 
         let acc = accFreeTycon opts tc acc
@@ -2160,7 +2174,8 @@ and accFreeInTypeLeftToRight g cxFlag thruFlag acc ty  =
     | TType_tuple (tupInfo, l) -> 
         let acc = accFreeInTupInfoLeftToRight g cxFlag thruFlag acc tupInfo 
         accFreeInTypesLeftToRight g cxFlag thruFlag acc l 
-    | TType_nat _ -> []
+    | TType_nat _ -> acc
+    | TType_minus _ -> acc
     | TType_app (_, tinst) -> accFreeInTypesLeftToRight g cxFlag thruFlag acc tinst 
     | TType_ucase (_, tinst) -> accFreeInTypesLeftToRight g cxFlag thruFlag acc tinst 
     | TType_fun (d, r) -> accFreeInTypeLeftToRight g cxFlag thruFlag (accFreeInTypeLeftToRight g cxFlag thruFlag acc d ) r
@@ -2555,7 +2570,7 @@ module SimplifyTypes =
         | TType_tuple (_, tys) -> List.fold (foldTypeButNotConstraints f) z tys
         | TType_nat _ -> z
         | TType_fun (s, t)         -> foldTypeButNotConstraints f (foldTypeButNotConstraints f z s) t
-        | TType_var _            -> z
+        | TType_var _  | TType_minus _ -> z
         | TType_measure _          -> z
 
     let incM x m =
@@ -3238,6 +3253,7 @@ module DebugPrint = begin
            auxTyparsL env tcL prefix tinst
         | TType_tuple (_tupInfo, tys) -> sepListL (wordL (tagText "*")) (List.map (auxTypeAtomL env) tys) |> wrap
         | TType_nat num -> leftL (tagText (string num)) |> wrap
+        | TType_minus (_tupInfo, tys) ->sepListL (wordL (tagText "-")) (List.map (auxTypeAtomL env) tys) |> wrap
         | TType_fun (f, x)           -> ((auxTypeAtomL env f ^^ wordL (tagText "->")) --- auxTypeL env x) |> wrap
         | TType_var typar           -> auxTyparWrapL env isAtomic typar 
         | TType_measure unt -> 
@@ -7367,6 +7383,7 @@ let rec typeEnc g (gtpsType, gtpsMethod) ty =
         else 
             sprintf "System.Tuple%s"(tyargsEnc g (gtpsType, gtpsMethod) tys)
     | TType_nat num -> string num
+    | TType_minus (_tupInfo, tys) -> sprintf "System.Minus%s"(tyargsEnc g (gtpsType, gtpsMethod) tys)
     | TType_fun (f, x)           -> 
         "Microsoft.FSharp.Core.FSharpFunc" + tyargsEnc g (gtpsType, gtpsMethod) [f;x]
     | TType_var typar           -> 

@@ -4584,15 +4584,28 @@ and TcTypeOrMeasure optKind cenv newOk checkCxs occ env (tpenv:SyntacticUnscoped
             let ms, tpenv = TcMeasuresAsTuple cenv newOk checkCxs occ env tpenv args m
             TType_measure ms, tpenv
         else
-            let args', tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
-            TType_tuple(tupInfoRef, args'), tpenv
+            let args', tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m (*)
+            match args' with
+            | ty::[] -> ty, tpenv
+            | _ -> TType_tuple(tupInfoRef, args'), tpenv
 
     // OPENFSHARP TODO: implement the conversion between SynType.Nat to TType_nat
     | SynType.Nat(num, _) ->   
         TType_nat(num), tpenv
 
+    | SynType.Minus(args, m) ->
+        let isMeasure = match optKind with Some TyparKind.Measure -> true | None -> List.exists (fun (isquot, _) -> isquot) args | _ -> false
+        if isMeasure then
+            let ms, tpenv = TcMeasuresAsTuple cenv newOk checkCxs occ env tpenv args m
+            TType_measure ms, tpenv
+        else
+            let args', tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m (-)
+            match args' with
+            | ty::[] -> ty, tpenv
+            | _ -> TType_minus(tupInfoRef, args'), tpenv
+
     | SynType.StructTuple(args, m) ->   
-        let args', tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
+        let args', tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m (*)
         TType_tuple(tupInfoStruct, args'), tpenv
 
     | SynType.Fun(domainTy, resultTy, _) -> 
@@ -4704,16 +4717,16 @@ and TcAnonTypeOrMeasure optKind _cenv rigid dyn newOk m =
 and TcTypes cenv newOk checkCxs occ env tpenv args =
     List.mapFold (TcTypeAndRecover cenv newOk checkCxs occ env) tpenv args 
 
-and TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m = 
+and TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m op = 
     match args with
     | [] -> error(InternalError("empty tuple type", m))
     | [(_, ty)] -> let ty, tpenv = TcTypeAndRecover cenv newOk checkCxs occ env tpenv ty in [ty], tpenv
     | (isquot, ty)::args -> 
         let ty, tpenv = TcTypeAndRecover cenv newOk checkCxs occ env tpenv ty
-        let tys, tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m
+        let tys, tpenv = TcTypesAsTuple cenv newOk checkCxs occ env tpenv args m op
         if isquot then errorR(Error(FSComp.SR.tcUnexpectedSlashInType(), m))
         // OPENFSHARP TODO: implement the multiplication of types
-        tyMultiplication ty tys, tpenv
+        tyMultiplication ty tys op, tpenv
 
 // Type-check a list of measures separated by juxtaposition, * or /
 and TcMeasuresAsTuple cenv newOk checkCxs occ env (tpenv:SyntacticUnscopedTyparEnv) args m = 
@@ -15586,6 +15599,7 @@ module EstablishTypeDefinitionCores =
                 | TType_tuple (_, l) -> accInAbbrevTypes l acc
                 // OPENFSHARP TODO: implement that TType_nat is ignored in checking cycles in abbreviations
                 | TType_nat _ -> acc
+                | TType_minus _ -> acc
                 | TType_ucase (UCRef(tc, _), tinst) 
                 | TType_app (tc, tinst) -> 
                     let tycon2 = tc.Deref

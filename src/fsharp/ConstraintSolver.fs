@@ -566,7 +566,7 @@ let rec SimplifyMeasuresInType g resultFirst ((generalizable, generalized) as pa
     | TType_ucase(_, l)
     | TType_app (_, l) 
     | TType_tuple (_, l) -> SimplifyMeasuresInTypes g param l
-    | TType_nat _ -> [], []
+    | TType_nat _ | TType_minus _ -> [], []
     | TType_fun (d, r) -> if resultFirst then SimplifyMeasuresInTypes g param [r;d] else SimplifyMeasuresInTypes g param [d;r]        
     | TType_var _   -> param
     | TType_forall (_, tau) -> SimplifyMeasuresInType g resultFirst param tau
@@ -603,7 +603,7 @@ let rec GetMeasureVarGcdInType v ty =
     | TType_ucase(_, l)
     | TType_app (_, l) 
     | TType_tuple (_, l) -> GetMeasureVarGcdInTypes v l
-    | TType_nat _ -> ZeroRational
+    | TType_nat _ | TType_minus _ -> ZeroRational
     | TType_fun (d, r) -> GcdRational (GetMeasureVarGcdInType v d) (GetMeasureVarGcdInType v r)
     | TType_var _   -> ZeroRational
     | TType_forall (_, tau) -> GetMeasureVarGcdInType v tau
@@ -792,6 +792,9 @@ and SolveTypeEqualsType (csenv:ConstraintSolverEnv) ndeep m2 (trace: OptionalTra
     | TType_var tp1, TType_var tp2 when not csenv.MatchingOnly && PreferUnifyTypar tp2 tp1 -> SolveTyparEqualsType csenv ndeep m2 trace sty2 ty1
 
     | TType_var r, _ when (r.Rigidity <> TyparRigidity.Rigid) -> SolveTyparEqualsType csenv ndeep m2 trace sty1 ty2
+    | TType_nat n, TType_var r when (r.Rigidity <> TyparRigidity.Rigid) && not csenv.MatchingOnly -> 
+        if n >= 0 then SolveTyparEqualsType csenv ndeep m2 trace sty2 ty1
+        else ErrorD (ConstraintSolverError("Nat can't be less then 0", csenv.m, m2))
     | _, TType_var r when (r.Rigidity <> TyparRigidity.Rigid) && not csenv.MatchingOnly -> SolveTyparEqualsType csenv ndeep m2 trace sty2 ty1
 
     // Catch float<_>=float<1>, float32<_>=float32<1> and decimal<_>=decimal<1> 

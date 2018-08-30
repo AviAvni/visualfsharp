@@ -944,6 +944,12 @@ module private PrintTypes =
         | TType_nat num ->
             wordL (tagText (string num))
 
+        | TType_minus (tupInfo,t)  ->
+            if evalTupInfoIsStruct tupInfo then 
+                WordL.keywordStruct --- bracketL (layoutTypesWithInfoAndPrec denv env 2 (wordL (tagPunctuation "-")) t)
+            else 
+                bracketIfL (prec <= 2) (layoutTypesWithInfoAndPrec denv env 2 (wordL (tagPunctuation "-")) t)
+
         // Layout a first-class generic type. 
         | TType_forall (tps,tau) ->
             let tauL = layoutTypeWithInfoAndPrec denv env prec tau
