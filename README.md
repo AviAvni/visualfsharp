@@ -12,6 +12,11 @@ To
 type I3 = int * int * int
 ```
 
+Then you'll be able to use it like this
+```
+let i3 : I3 = 1, 2, 3
+```
+
 Think in what phase of the compiler this need to be done?
 ```
 Source -> Tokenizer -> Tokens -> Parser -> AST -> Type Checker -> TAST -> Optimizer -> TAST -> Code Generator -> IL
