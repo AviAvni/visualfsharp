@@ -1,6 +1,6 @@
 # OPENFSHARP Contribution to the compiler workshop
 
-## 3nd Task
+## 3rd Task
 
 In this task you'll extend the feature from the 2st task to be able to compile and run code like this
 ```
