@@ -1,4 +1,4 @@
-# OPENFSHARP COntribution to the compiler workshop
+# OPENFSHARP Contribution to the compiler workshop
 
 ## 1st Task
 
