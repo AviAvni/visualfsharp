@@ -3,7 +3,7 @@
 ## 2nd Task
 
 In this task you'll extend the feature from the 1st task to be able to compile and run code like this
-``
+```
 type I3 = int * 3
 
 let i3 : I3 = 1, 2, 3
