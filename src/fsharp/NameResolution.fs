@@ -3206,8 +3206,8 @@ let ResolveNestedField sink (ncenv:NameResolver) nenv ad ty (lid : Ident list) =
             
         if isAppTy g ty then 
             match ncenv.InfoReader.TryFindRecdOrClassFieldInfoOfType(id.idText,m,ty) with
-            | Some (RecdFieldInfo(_,rfref)) -> success [FieldResolution(rfref,false)]
-            | None ->
+            | ValueSome (RecdFieldInfo(_,rfref)) -> success [FieldResolution(rfref,false)]
+            | ValueNone ->
                 if isRecdTy g ty then
                     // record label doesn't belong to record type -> suggest other labels of same record
                     let suggestLabels() = SuggestOtherLabelsOfSameRecordType g nenv ty id (otherRecdFlds ty)
